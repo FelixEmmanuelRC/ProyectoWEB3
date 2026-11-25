@@ -54,3 +54,53 @@ INSERT INTO parcelas (id_huerto, codigo_parcela, area_m2, tipo_suelo, disponible
 (2, 'P-MIR-01', 35.00, 'Arcilloso', FALSE),
 (2, 'P-MIR-02', 35.00, 'Franco', TRUE),
 (3, 'P-PRA-01', 40.00, 'Humífero', TRUE);
+
+
+
+--MÓDULO 3: COSECHAS E HISTORIAL (Integrante 4)
+--Depende de: siembras, parcelas, huertos, cultivos
+
+
+-- Tabla cosechas (relacionada con siembras)
+CREATE TABLE IF NOT EXISTS cosechas (
+    id_cosecha         INT AUTO_INCREMENT PRIMARY KEY,
+    id_siembra         INT NOT NULL,
+    fecha_cosecha      DATE NOT NULL,
+    cantidad_cosechada DECIMAL(10,2) NOT NULL,
+    unidad             VARCHAR(20) DEFAULT 'kg',
+    observaciones      VARCHAR(255),
+    CONSTRAINT fk_cosecha_siembra
+        FOREIGN KEY (id_siembra) REFERENCES siembras(id_siembra)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Datos de prueba (ajustar id_siembra a los reales)
+INSERT INTO cosechas (id_siembra, fecha_cosecha, cantidad_cosechada, unidad, observaciones) VALUES
+(1, '2026-10-15', 45.50, 'kg', 'Primera cosecha de Musk Melon, buena calidad'),
+(1, '2026-10-29', 38.00, 'kg', 'Segunda cosecha Musk Melon'),
+(2, '2026-10-20', 12.75, 'kg', 'Cosecha en parcela musk');
+
+-- Consulta: historial de cosechas por parcela
+SELECT
+    p.id_parcela,
+    p.codigo_parcela AS parcela,
+    h.nombre         AS huerto,
+    c.nombre         AS cultivo,
+    s.fecha_siembra,
+    co.fecha_cosecha,
+    co.cantidad_cosechada,
+    co.unidad
+FROM cosechas co
+JOIN siembras s ON co.id_siembra = s.id_siembra
+JOIN parcelas p ON s.id_parcela  = p.id_parcela
+JOIN huertos  h ON p.id_huerto   = h.id_huerto
+JOIN cultivos c ON s.id_cultivo  = c.id_cultivo
+WHERE p.id_parcela = 1
+ORDER BY co.fecha_cosecha DESC;
+
+-- Consulta: total cosechado por parcela
+SELECT p.codigo_parcela AS parcela, SUM(co.cantidad_cosechada) AS total_kg
+FROM cosechas co
+JOIN siembras s ON co.id_siembra = s.id_siembra
+JOIN parcelas p ON s.id_parcela = p.id_parcela
+GROUP BY p.id_parcela, p.codigo_parcela;
